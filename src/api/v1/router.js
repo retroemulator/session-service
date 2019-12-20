@@ -1,34 +1,41 @@
 const express = require('express');
+const Consoles = require('@retroemulator/core/src/enums/consoles');
+const { generateError, Errors } = require('@retroemulator/core/src/errors');
+const firestore = require('../../firestore');
 
 const router = express.Router();
 
+function generateSessionId() {
+  return 'xxxxx'.replace(/[x]/g, c => {
+    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16).toUpperCase();
+  });
+}
+
+/**
+ * POST /create-session
+ *
+ * @param consoleId
+ *
+ * Creates a session in Firestore, makes request to the EmulationService to
+ * spin up a new Docker instance with the corresponding stream and socket URLs.
+ */
 router.post('/create-session', (req, res) => {
-    console.log(req.body);
-    // Validate against the req.body
+  res.setHeader('Content-Type', 'application/json');
+  const { consoleId } = req.body;
+  if (consoleId === undefined || !Consoles.get(consoleId)) {
+    return res.status(400).send(generateError(
+      Errors.Generic.INVALID_CONSOLE_ID.code,
+      Errors.Generic.INVALID_CONSOLE_ID.message,
+    ));
+  }
 
-    // Make API call to the emulation-service to spin up console with game
+  // Generate a 5 digit sessionId, note that there are only numbers and
+  // uppercase letters
+  const sessionId = generateSessionId();
 
-    // Responds with streamUrl, socketUrl
 
-    // Update firebase
-        // sessionId
-        // emulation { streamUrl, socketUrl }
-        // game { ... }
-        // users { maxPlayerNumber }
-});
-
-router.get('/session/:sessionId', (req, res) => {
-    console.log(req.params.sessionId);
-
-    // Query for session by sessionId
-});
-
-router.post('/connect-session/:sessionId', (req, res) => {
-    // Query for session by sessionId
-
-    // Try to resolve the next user
-
-    // If at max users return error code
+  res.send({ shit: 1 });
 });
 
 module.exports = router;
